@@ -47,7 +47,7 @@ public class GameController : MonoBehaviour {
         }
         if (Input.GetKeyDown(KeyCode.L))
         {
-            Load(2);
+            Load(1);
             for (int i = 0; i < 9; i++)
                 Debug.Log(m_BoardState[i]);
         }
@@ -78,7 +78,7 @@ public class GameController : MonoBehaviour {
         }
         else//O is playing
         {
-            m_BoardState[move] = 2;
+            m_BoardState[move] = -1;
             m_BoardImages[move].sprite = _O;
         }
         m_IsXTurn = !m_IsXTurn;
@@ -134,6 +134,16 @@ public class GameController : MonoBehaviour {
                 break;
         }
         m_BoardState = loaded.Split(';').Select(n => System.Convert.ToInt32(n)).ToArray();
+        for (int i = 0; i < 9; i++)
+        {
+            if(m_BoardState[i] == 0)
+            m_BoardImages[i].sprite = _Empty;
+            else if (m_BoardState[i] == 1)
+                m_BoardImages[i].sprite = _X;
+            else
+                m_BoardImages[i].sprite = _O;
+        }
+        mainGame = new TicTac(m_Player  ,m_BoardState);
         return true;
     }
 }
@@ -143,6 +153,11 @@ class TicTac
     public TicTac(int player)
     {
         m_Player = player;
+    }
+    public TicTac(int player, int[] loaded)
+    {
+        m_Player = player;
+        board = loaded;
     }
 
     public int[] board = new int[9] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };

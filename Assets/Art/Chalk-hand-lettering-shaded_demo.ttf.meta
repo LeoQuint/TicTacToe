@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 459384e880f7c1c4d88a875fe1525139
+timeCreated: 1489590728
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Chalk-hand-lettering-shaded_dem
+  fontNames:
+  - Chalk-hand-lettering-shaded_dem
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -16,13 +16,18 @@ public class GameController : MonoBehaviour {
     [SerializeField]
     Transform _Board;
 
+    public GameObject _LoadSaveMenu;
+    public GameObject _EndGameMenu;
+
     public int[] m_BoardState = new int[9] { 0,0,0,0,0,0,0,0,0};
     public Image[] m_BoardImages = new Image[9];
     public bool m_IsXTurn = true;
     public bool m_IsAI_X = false;
 
     public int m_Player = 1;
+    private bool m_IsGameover = false;
 
+    private bool m_IsSaving = false;
 
     TicTac mainGame;
 
@@ -55,8 +60,10 @@ public class GameController : MonoBehaviour {
 
     public void MakeMove(int move)
     {
-        if (mainGame.currentTurn != m_Player)
+        Debug.Log(mainGame.currentTurn);
+        if (mainGame.currentTurn != m_Player || m_IsGameover)
         {
+            Debug.Log("Cant move now");
             return;
         }
         if (move > 9 || m_BoardState[move] != 0)
@@ -65,6 +72,10 @@ public class GameController : MonoBehaviour {
         }
         mainGame.playerMove(move);
         UpdateBoard(move);
+        if (mainGame.turnCount == 9)
+        {
+            return;
+        }
         StartCoroutine(WaitForCPU());
     }
 
@@ -82,16 +93,60 @@ public class GameController : MonoBehaviour {
             m_BoardImages[move].sprite = _O;
         }
         m_IsXTurn = !m_IsXTurn;
+        Debug.Log("Board status: " + mainGame.win()+ ". Currently on turn: " + mainGame.turnCount);
+        if (mainGame.win() != 0)
+        {
+            EndGame(mainGame.win());
+        }
+        else if (mainGame.turnCount == 9)
+        {
+            EndGame(2);
+        }
     }
 
     IEnumerator WaitForCPU()
     {
         yield return new WaitForSeconds(1f);
+       
         UpdateBoard(mainGame.computerMove());
+    }
+
+    public void NewGame()
+    {
+        _LoadSaveMenu.SetActive(false);
+        _EndGameMenu.SetActive(false);
+        m_IsGameover = false;
+        m_BoardState = new int[9] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        mainGame = new TicTac(m_Player);
+        m_IsXTurn = true;
+        for (int i = 1; i < 10; i++)
+        {
+            m_BoardImages[i - 1].sprite = _Empty;
+        }
+    }
+
+    public void Exit()
+    {
+        Application.Quit();
+    }
+
+    public void SelectSlot(int slot)
+    {
+        Debug.Log("Selecting slot: " + slot + " is saving: " + m_IsSaving);
+        if (m_IsSaving)
+        {
+            Save(slot);
+        }
+        else
+        {
+            Load(slot);
+        }
     }
 
     public void Save(int slot)
     {
+        
+        _LoadSaveMenu.SetActive(false);
         string saved = string.Join(";", new List<int>(m_BoardState).ConvertAll(i => i.ToString()).ToArray());
              Debug.Log(saved);
         switch (slot)
@@ -110,6 +165,9 @@ public class GameController : MonoBehaviour {
 
     public bool Load(int slot)
     {
+
+        _EndGameMenu.SetActive(false);
+        _LoadSaveMenu.SetActive(false);
         string loaded = "";
   
         switch (slot)
@@ -134,17 +192,68 @@ public class GameController : MonoBehaviour {
                 break;
         }
         m_BoardState = loaded.Split(';').Select(n => System.Convert.ToInt32(n)).ToArray();
+        int turncount = 0;
         for (int i = 0; i < 9; i++)
         {
-            if(m_BoardState[i] == 0)
-            m_BoardImages[i].sprite = _Empty;
+            if (m_BoardState[i] == 0)
+            {
+                m_BoardImages[i].sprite = _Empty;
+            }
             else if (m_BoardState[i] == 1)
+            {
                 m_BoardImages[i].sprite = _X;
+                turncount++;
+            }
             else
+            {
                 m_BoardImages[i].sprite = _O;
+                turncount++;
+            }
+                
+        }
+        if (turncount % 2 == 0)
+        {
+            m_IsXTurn = true;
+        }
+        else
+        {
+            m_IsXTurn = false;
         }
         mainGame = new TicTac(m_Player  ,m_BoardState);
+        m_IsGameover = false;
         return true;
+    }
+
+    public void OpenSaveMenu()
+    {
+        m_IsSaving = true;
+        _LoadSaveMenu.transform.FindChild("txt_saveLoad").GetComponent<Text>().text = "Save Game";
+        _LoadSaveMenu.SetActive(true);
+    }
+
+    public void OpenLoadMenu()
+    {
+        m_IsSaving = false;
+        _LoadSaveMenu.transform.FindChild("txt_saveLoad").GetComponent<Text>().text = "Load Game";
+        _LoadSaveMenu.SetActive(true);
+    }
+
+    void EndGame(int type)
+    {
+        m_IsGameover = true;
+        _EndGameMenu.SetActive(true);
+        if (type == -1)//X wins
+        {
+            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "X\n WINS!!!";
+        }
+        else if (type == 1)//O wins
+        {
+            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "O\n WINS!!!";            
+        }
+        else//draw
+        {           
+            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "It's a Draw";
+        }
     }
 }
 
@@ -163,8 +272,9 @@ class TicTac
     public int[] board = new int[9] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     public int currentTurn = 1;
     private int m_Player;
+    public int turnCount = 0;
 
-    int win() 
+    public int win() 
     {
         //determines if a player has won, returns 0 otherwise.
         int[,] wins = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 0, 3, 6 }, { 1, 4, 7 }, { 2, 5, 8 }, { 0, 4, 8 }, { 2, 4, 6 } };
@@ -178,6 +288,7 @@ class TicTac
 	    }
 	    return 0;
     }
+
 
     int minimax(int player)
     {
@@ -208,6 +319,7 @@ class TicTac
 
     public int computerMove()
     {
+        turnCount++;
         int move = -1;
         int score = -2;
         int i;
@@ -233,6 +345,7 @@ class TicTac
 
     public void playerMove(int move)
     {
+        turnCount++;
         currentTurn = 0;
         board[move] = -1;
     }

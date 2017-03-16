@@ -63,7 +63,7 @@ public class GameController : MonoBehaviour {
         Debug.Log(mainGame.currentTurn);
         if (mainGame.currentTurn != m_Player || m_IsGameover)
         {
-            Debug.Log("Cant move now");
+            Debug.Log("Cant move now its: " + mainGame.currentTurn + "'s turn and you are " + m_Player);
             return;
         }
         if (move > 9 || m_BoardState[move] != 0)
@@ -122,6 +122,12 @@ public class GameController : MonoBehaviour {
         for (int i = 1; i < 10; i++)
         {
             m_BoardImages[i - 1].sprite = _Empty;
+        }
+        Debug.Log("You are player " + m_Player);
+        if (m_Player == -1)
+        {
+            
+            StartCoroutine(WaitForCPU());
         }
     }
 
@@ -238,17 +244,27 @@ public class GameController : MonoBehaviour {
         _LoadSaveMenu.SetActive(true);
     }
 
+    public void SelectSide(int side)
+    {
+        if (mainGame.turnCount != 0 && !m_IsGameover)
+        {
+            return;
+        }
+        m_Player = side;
+        mainGame.SetPlayer(side);
+    }
+
     void EndGame(int type)
     {
         m_IsGameover = true;
         _EndGameMenu.SetActive(true);
-        if (type == -1)//X wins
+        if (type == -1)//Player
         {
-            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "X\n WINS!!!";
+            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "YOU WON??!?";
         }
-        else if (type == 1)//O wins
+        else if (type == 1)//CPU
         {
-            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "O\n WINS!!!";            
+            _EndGameMenu.transform.FindChild("Text").GetComponent<Text>().text = "CPU\n WINS!!!";            
         }
         else//draw
         {           
@@ -339,7 +355,7 @@ class TicTac
         }
         //returns a score based on minimax tree at a given node.
         board[move] = 1;
-        currentTurn = 1;
+        currentTurn = turnCount % 2 == 0? 1: -1;
         return move;
     }
 
@@ -348,6 +364,11 @@ class TicTac
         turnCount++;
         currentTurn = 0;
         board[move] = -1;
+    }
+
+    public void SetPlayer(int player)
+    {
+        m_Player = player;
     }
 
 }
